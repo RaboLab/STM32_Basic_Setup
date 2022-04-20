@@ -1,5 +1,13 @@
 #include "Defination.h"
 #include "vofa.h"
+#include "stdarg.h"
+
+#ifdef VOFA_RUN_USB
+	#include "usbd_cdc_if.h"
+#endif
+#ifdef VOFA_RUN_UART
+  #define "usart.h"
+#endif
 
 #ifdef VOFA_RUN_UART
   #ifndef VOFA_UART
@@ -12,35 +20,28 @@ uint8_t vofaMemPool[ VOFA_CHANNEL_COUNT * 4 + 4];
 static void vofa_fdata_config(void);
 
 ////////////////////////////////////////////////////////////////////////////
-#ifdef VOFA_RUN_UART
-static void vofa_uart_method(uint16_t data_bytes, uint8_t *mem) {
-  // printf("%s\n", mem);
-	HAL_UART_Transmit_DMA(&VOFA_UART,mem,data_bytes);
-}
-#endif
-
-#ifdef VOFA_RUN_USB
-#include "stdarg.h"
-
-static void vofa_usb_method(uint16_t data_bytes, uint8_t *mem) {
-  // printf("%s\n", mem);
-	// HAL_UART_Transmit_DMA(&VOFA_UART,mem,data_bytes);
-  CDC_Transmit_FS(mem, data_bytes);
+static void vofa_send_method(uint8_t *mem, uint16_t data_bytes) 
+{
+	#ifdef VOFA_RUN_USB
+		CDC_Transmit_FS(mem, data_bytes);
+	#endif
+	#ifdef VOFA_RUN_UART
+		HAL_UART_Transmit_DMA(&VOFA_UART, mem, data_bytes);
+	#endif
 }
 
-void usb_printf(const uint8_t * format, ...) {
+////////////////////////////////////////////////////////////////////////////
+
+void vofa_printf(const char * format, ...) {
   va_list args;
   uint32_t len;
   uint8_t buff[200];  // 200 Bytes
 
   va_start(args, format);
-  len = vsnprintf((uint8_t *)buff, 200, (uint8_t *)format, args);
+  len = vsnprintf((char *)buff, 200, (char *)format, args);
   va_end(args);
-  CDC_Transmit_FS(buff, len);
+  vofa.send(buff, len);
 }
-#endif
-////////////////////////////////////////////////////////////////////////////
-
 static void vofa_init_method() {
   vofa_fdata_config();
 }
@@ -59,7 +60,7 @@ static void vofa_fdata_set_data(uint8_t chan_no, float fdata) {
 static void vofa_fdata_send(uint8_t chan_count) {   // if cnt = 3, then send 0, 1, 2
   memcpy(vofaMemPool, vofa.fdata.value, chan_count * 4);
   memcpy(vofaMemPool + chan_count * 4, vofa.fdata.tail, 4);
-  vofa.send(4 * (chan_count + 1), vofaMemPool);
+  vofa.send(vofaMemPool, 4 * (chan_count + 1));
 }
 
 static void vofa_pic_config(int IMG_ID, int IMG_SIZE, int IMG_WIDTH,
@@ -75,11 +76,10 @@ static void vofa_pic_config(int IMG_ID, int IMG_SIZE, int IMG_WIDTH,
 }
 
 static void vofa_pic_send(void *pic_ptr) {
-  vofa.send(28, (uint8_t *)&(vofa.pic));  // 7*4 
-  vofa.send(vofa.pic.IMG_SIZE, pic_ptr);
+  vofa.send((uint8_t *)&(vofa.pic), 28);  // 7*4   send head
+  vofa.send(pic_ptr, vofa.pic.IMG_SIZE);
 }
 
-#ifdef VOFA_RUN_UART
 vofa_t vofa = {
     .pic.config = vofa_pic_config,
     .pic.send = vofa_pic_send,
@@ -89,27 +89,6 @@ vofa_t vofa = {
     .fdata.send = vofa_fdata_send,
 
     .init = vofa_init_method,
-    .send = vofa_uart_method,
+    .send = vofa_send_method,
 };
-#endif
 
-#ifdef VOFA_RUN_USB
-vofa_t vofa = {
-    .pic.config = vofa_pic_config,
-    .pic.send = vofa_pic_send,
-
-    .fdata.config = vofa_fdata_config,
-    .fdata.set = vofa_fdata_set_data,
-    .fdata.send = vofa_fdata_send,
-
-    .init = vofa_init_method,
-    .send = vofa_usb_method,
-};
-#endif
-
-int fputc(int ch, FILE *f)
-{
-	uint8_t tem=ch;
-  vofa.send(1,&tem);
-	return ch;
-}

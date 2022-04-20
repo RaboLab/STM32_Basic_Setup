@@ -1,6 +1,9 @@
 #ifndef __LOOP_H_
 #define __LOOP_H_
+
 #include "Defination.h"
+#include "main.h"
+#include "stdbool.h"
 
 
 #define CONTROL_FREQ_HZ 20000   //设置后台最小时间间隔 20kHZ   Systick函数 频率 20KHZ

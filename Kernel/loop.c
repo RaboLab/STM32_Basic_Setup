@@ -1,4 +1,5 @@
 #include "loop.h"
+#include "vofa.h"
 
 
 bool sys_tick_changed_flag = false;
@@ -16,7 +17,7 @@ void loop(void)
 	//Device Init//
 
 	//Communication Init//
-	vofa_init_method();
+	vofa.init();
 
 	//中断接管，心跳程序变成20kHZ (可以更高)
 	SysTickUpdate();

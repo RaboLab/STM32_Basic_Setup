@@ -2,16 +2,15 @@
 #define __VOFA_H_
 
 #include <stdint.h>
-
-#define VOFA_CHANNEL_COUNT 16
-//  0 -- 15
+#include <stdio.h>
 
 #define VOFA_RUN_USB  
 //#define VOFA_RUN_UART 
 
+#define VOFA_CHANNEL_COUNT 16
+//  0 -- 15
 
 
-void vofa_init_method(void);
 
 struct picture {
   int IMG_ID;
@@ -40,10 +39,10 @@ typedef struct {
   struct floatdata fdata;
   // user SHOULD complete thoes two methods following below
   void (*init)(void);
-  void (*send)(uint16_t data_byte, uint8_t *mem);
+  void (*send)(uint8_t *mem, uint16_t data_byte);
 } vofa_t;
 
 extern vofa_t vofa;
-extern int fputc(int ch, FILE *f);
+void vofa_printf(const char * format, ...);
 
 #endif
