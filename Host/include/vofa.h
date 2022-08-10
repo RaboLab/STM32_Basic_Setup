@@ -4,8 +4,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define VOFA_RUN_USB  
-//#define VOFA_RUN_UART 
+//#define VOFA_RUN_USB
+#define VOFA_RUN_UART
+#define VOFA_UART huart2
 
 #define VOFA_CHANNEL_COUNT 16
 //  0 -- 15

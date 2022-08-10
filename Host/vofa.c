@@ -1,12 +1,13 @@
-#include "Defination.h"
 #include "vofa.h"
 #include "stdarg.h"
+#include "stdlib.h"
+#include "string.h"
 
 #ifdef VOFA_RUN_USB
 	#include "usbd_cdc_if.h"
 #endif
 #ifdef VOFA_RUN_UART
-  #define "usart.h"
+  #include "usart.h"
 #endif
 
 #ifdef VOFA_RUN_UART
@@ -26,7 +27,7 @@ static void vofa_send_method(uint8_t *mem, uint16_t data_bytes)
 		CDC_Transmit_FS(mem, data_bytes);
 	#endif
 	#ifdef VOFA_RUN_UART
-		HAL_UART_Transmit_DMA(&VOFA_UART, mem, data_bytes);
+		HAL_UART_Transmit(&VOFA_UART, mem, data_bytes,0xff); //256ms Overtime
 	#endif
 }
 
