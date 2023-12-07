@@ -4,18 +4,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
-//#define VOFA_RUN_USB
-#define VOFA_RUN_UART
-#define VOFA_UART huart2
 
-#define VOFA_CHANNEL_COUNT 16
+#define VOFA_CHANNEL_COUNT 4
+
 //  0 -- 15
-
-
-
 struct picture {
   int IMG_ID;
-  int IMG_SIZE;   // N bytes, not WIDTH*HEIGHT
+  int IMG_SIZE;   
   int IMG_WIDTH;
   int IMG_HEIGHT;
   int IMG_FORMAT;
@@ -36,14 +31,18 @@ struct floatdata {
 };
 
 typedef struct {
+  uint8_t vofa_run_type;  // 1: UART, 2: USB, 3: RTT, 0: no_init
+#ifdef __USART_H__
+  UART_HandleTypeDef * vofa_uart;
+#endif 
   struct picture pic;
   struct floatdata fdata;
+  void (*printf)(const char * format, ...);
   // user SHOULD complete thoes two methods following below
   void (*init)(void);
   void (*send)(uint8_t *mem, uint16_t data_byte);
 } vofa_t;
 
 extern vofa_t vofa;
-void vofa_printf(const char * format, ...);
 
 #endif

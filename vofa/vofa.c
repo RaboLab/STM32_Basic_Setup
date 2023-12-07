@@ -2,15 +2,14 @@
 #include "stdarg.h"
 #include "stdlib.h"
 #include "string.h"
+#include "SEGGER_RTT.h"
+
 
 #ifdef VOFA_RUN_USB
 	#include "usbd_cdc_if.h"
-#endif
-#ifdef VOFA_RUN_UART
+#else
+  #define VOFA_RUN_UART
   #include "usart.h"
-#endif
-
-#ifdef VOFA_RUN_UART
   #ifndef VOFA_UART
     #error "No Define VOFA_UART"
   #endif
@@ -18,6 +17,9 @@
 
 uint8_t vofaMemPool[ VOFA_CHANNEL_COUNT * 4 + 4];
 
+void vofa_init() {
+  vofa_fdata_config();
+}
 static void vofa_fdata_config(void);
 
 ////////////////////////////////////////////////////////////////////////////
@@ -33,7 +35,7 @@ static void vofa_send_method(uint8_t *mem, uint16_t data_bytes)
 
 ////////////////////////////////////////////////////////////////////////////
 
-void vofa_printf(const char * format, ...) {
+static void vofa_printf(const char * format, ...) {
   va_list args;
   uint32_t len;
   uint8_t buff[200];  // 200 Bytes
@@ -41,10 +43,7 @@ void vofa_printf(const char * format, ...) {
   va_start(args, format);
   len = vsnprintf((char *)buff, 200, (char *)format, args);
   va_end(args);
-  vofa.send(buff, len);
-}
-static void vofa_init_method() {
-  vofa_fdata_config();
+  SEGGER_RTT_printf(0, (char *)buff);
 }
 
 static void vofa_fdata_config(void) {
@@ -89,7 +88,5 @@ vofa_t vofa = {
     .fdata.set = vofa_fdata_set_data,
     .fdata.send = vofa_fdata_send,
 
-    .init = vofa_init_method,
-    .send = vofa_send_method,
+    .printf = vofa_printf,
 };
-
